@@ -101,57 +101,57 @@ public class Context implements Serializable {
 	}
 
 	private static HashSet<String> yago;
-	static HashSet<String> preps = Common.readFile2Set("yago/prep");
+//	static HashSet<String> preps = Common.readFile2Set("yago/prep");
 
-	private static String findHead(String text) {
-		String tks[] = text.split("\\s+");
-		String head = tks[tks.length - 1];
+//	private static String findHead(String text) {
+//		String tks[] = text.split("\\s+");
+//		String head = tks[tks.length - 1];
+//
+//		for (int i = tks.length - 1; i >= 0; i--) {
+//			if (preps.contains(tks[i]) && i != 0) {
+//				head = tks[i - 1];
+//			}
+//		}
+//		return head;
+//	}
 
-		for (int i = tks.length - 1; i >= 0; i--) {
-			if (preps.contains(tks[i]) && i != 0) {
-				head = tks[i - 1];
-			}
-		}
-		return head;
-	}
-
-	public static HashSet<String> getYago() {
-		if (yago != null) {
-			return yago;
-		}
-		yago = new HashSet<String>();
-		try {
-			BufferedReader br = new BufferedReader(new FileReader("yagoTypes"));
-			String line;
-			while ((line = br.readLine()) != null) {
-				String tks[] = line.split("###");
-				String t1 = tks[0].trim();
-				String t2 = tks[1].trim();
-				String key1 = t1 + "###" + t2;
-
-				if (t2.endsWith("economy")) {
-					continue;
-				}
-
-				// yago.add(key1.toLowerCase().trim());
-				//
-				// String key2 = t1 + "###" + findHead(t2);
-				// yago.add(key2.toLowerCase().trim());
-
-				String key3 = t1 + "###" + EMUtil.getPorterStem(findHead(t2));
-				yago.add(key3.toLowerCase().trim());
-			}
-			br.close();
-		} catch (FileNotFoundException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		Common.outputHashSet(yago, "yagoSet");
-		return yago;
-	}
+//	public static HashSet<String> getYago() {
+//		if (yago != null) {
+//			return yago;
+//		}
+//		yago = new HashSet<String>();
+//		try {
+//			BufferedReader br = new BufferedReader(new FileReader("yagoTypes"));
+//			String line;
+//			while ((line = br.readLine()) != null) {
+//				String tks[] = line.split("###");
+//				String t1 = tks[0].trim();
+//				String t2 = tks[1].trim();
+//				String key1 = t1 + "###" + t2;
+//
+//				if (t2.endsWith("economy")) {
+//					continue;
+//				}
+//
+//				// yago.add(key1.toLowerCase().trim());
+//				//
+//				// String key2 = t1 + "###" + findHead(t2);
+//				// yago.add(key2.toLowerCase().trim());
+//
+//				String key3 = t1 + "###" + EMUtil.getPorterStem(findHead(t2));
+//				yago.add(key3.toLowerCase().trim());
+//			}
+//			br.close();
+//		} catch (FileNotFoundException e) {
+//			// TODO Auto-generated catch block
+//			e.printStackTrace();
+//		} catch (IOException e) {
+//			// TODO Auto-generated catch block
+//			e.printStackTrace();
+//		}
+//		Common.outputHashSet(yago, "yagoSet");
+//		return yago;
+//	}
 
 	// public static String getStrConcat(String t1, String t2) {
 	// String key = "";
@@ -176,7 +176,7 @@ public class Context implements Serializable {
 			for (String line : lines) {
 				String tks[] = line.split("#####");
 				if (tks.length != 2) {
-					System.out.println(line);
+//					System.out.println(line);
 					continue;
 				}
 				String chn = tks[0];
@@ -547,6 +547,7 @@ public class Context implements Serializable {
 		mentionClusterStrs.remove(mention.head.toLowerCase());
 		HashSet<String> candidateClusterStrs = new HashSet<String>();
 		for (EntityMention e : antecedent.entity.mentions) {
+//			System.out.println(e.maxTreeNode);
 			for (MyTreeNode leaf : e.maxTreeNode.getLeaves()) {
 				candidateClusterStrs.add(leaf.value);
 			}

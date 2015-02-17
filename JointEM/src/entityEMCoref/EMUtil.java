@@ -2,10 +2,8 @@ package entityEMCoref;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 import model.ACEDoc;
@@ -15,9 +13,9 @@ import model.EntityMention.Animacy;
 import model.EntityMention.Gender;
 import model.EntityMention.Grammatic;
 import model.EntityMention.MentionType;
-import model.EntityMention.Person;
 import model.EntityMention.Numb;
-import model.syntaxTree.MyTree;
+import model.EntityMention.Person;
+import model.ParseResult;
 import model.syntaxTree.MyTreeNode;
 
 import org.tartarus.martin.Stemmer;
@@ -35,7 +33,7 @@ public class EMUtil {
 	// -7
 
 	public static HashSet<String> location = Common
-			.readFile2Set("location_suffix");
+			.readFile2Set("dict/location_suffix");
 
 	public static HashSet<String> pronouns = new HashSet<String>(Arrays.asList(
 			"你", "我", "他", "她", "它", "你们", "我们", "他们", "她们", "它们"
@@ -596,7 +594,7 @@ public class EMUtil {
 	}
 
 	public static Numb getAntNumber(EntityMention mention) {
-		MyTreeNode np = mention.treeNode;
+		MyTreeNode np = mention.maxTreeNode;
 		boolean plura = false;
 		for (MyTreeNode leaf : np.getLeaves()) {
 			if (leaf.value.equals("、")) {
@@ -717,11 +715,10 @@ public class EMUtil {
 		return s;
 	}
 
-	public static HashMap<String, String> semanticMap = Common
-			.readFile2Map2("semanticTypes.all");
-	public static HashMap<String, String> subTypeMap = Common
-			.readFile2Map2("subTypes.all");
-
+//	public static HashMap<String, String> semanticMap = Common
+//			.readFile2Map2("semanticTypes.all");
+//	public static HashMap<String, String> subTypeMap = Common
+//			.readFile2Map2("subTypes.all");
 //	public static String getACESubType(EntityMention m, CoNLLPart part) {
 //		String instance = EMUtil.getSemanticInstance(m, part);
 //		String subtype = EMUtil.getACESubType(instance);
@@ -920,162 +917,161 @@ public class EMUtil {
 //		}
 //	}
 
-//	public static void setMentionAttri(EntityMention m, CoNLLPart part) {
+	public static void setMentionAttri(EntityMention m, ParseResult pr, ACEDoc doc) {
 //		int startIdx = part.getWord(m.start).indexInSentence;
 //		int endIdx = part.getWord(m.end).indexInSentence;
-//		CoNLLSentence sentence = part.getWord(m.start).sentence;
 //		m.startInS = startIdx;
-//		m.endInS = endIdx;
-//		m.sentenceID = sentence.getSentenceIdx();
-//		m.s = sentence;
-//
-//		// System.out.println(sentence.getSyntaxTree().leaves.size() + "#" +
-//		// sentence.getWords().size());
-//
-//		MyTreeNode leftLeaf = sentence.getSyntaxTree().leaves.get(startIdx);
-//		MyTreeNode rightLeaf = sentence.getSyntaxTree().leaves.get(endIdx);
-//
-//		ArrayList<MyTreeNode> leftAns = leftLeaf.getAncestors();
-//		ArrayList<MyTreeNode> rightAns = rightLeaf.getAncestors();
-//
-//		// MyTreeNode treeNode = treeNode2;
-//		MyTreeNode treeNode = null;
-//		for (int i = 0; i < leftAns.size() && i < rightAns.size(); i++) {
-//			// System.out.println(leftAns.get(i).value + "#" + rightAns.get(i) +
-//			// " : " + (leftAns.get(i)==rightAns.get(i)));
-//			if (leftAns.get(i) == rightAns.get(i)
-//					&& leftAns.get(i).value.equals("NP")) {
-//				ArrayList<MyTreeNode> leaves = leftAns.get(i).getLeaves();
-//				if (leaves.get(leaves.size() - 1) == rightLeaf) {
-//					treeNode = leftAns.get(i);
-//					if (leaves.get(0) == leftLeaf) {
-//						break;
-//					}
-//				}
-//			} else if (leftAns.get(i) != rightAns.get(i)) {
-//				break;
-//			}
-//		}
-//
-//		if (treeNode == null) {
-//			for (int i = 0; i < leftAns.size() && i < rightAns.size(); i++) {
-//				// System.out.println(leftAns.get(i).value + "#" +
-//				// rightAns.get(i) + " : " + (leftAns.get(i)==rightAns.get(i)));
-//				if (leftAns.get(i) == rightAns.get(i)
-//						&& leftAns.get(i).value.equals("NP")) {
-//					treeNode = leftAns.get(i);
-//				} else if (leftAns.get(i) != rightAns.get(i)) {
-//					break;
-//				}
-//			}
-//		}
-//
-//		if (treeNode == null) {
-//			treeNode = rightLeaf.parent;
-//		}
-//		// System.out.println(em.extent + " # " + part.getPartName());
-//		MyTreeNode head = treeNode.getHeadLeaf();
-//		// head = treeNode.getLeaves().get(treeNode.getLeaves().size());
+//		m.endInS = doc.getendIdx;
+		m.sentenceID = pr.id;
+		m.s = pr;
+
+		// System.out.println(sentence.getSyntaxTree().leaves.size() + "#" +
+		// sentence.getWords().size());
+
+		MyTreeNode leftLeaf = pr.tree.leaves.get(doc.getIndexInSentence(m.headStart));
+		MyTreeNode rightLeaf = pr.tree.leaves.get(doc.getIndexInSentence(m.headEnd));
+
+		ArrayList<MyTreeNode> leftAns = leftLeaf.getAncestors();
+		ArrayList<MyTreeNode> rightAns = rightLeaf.getAncestors();
+
+		// MyTreeNode treeNode = treeNode2;
+		MyTreeNode treeNode = null;
+		for (int i = 0; i < leftAns.size() && i < rightAns.size(); i++) {
+			// System.out.println(leftAns.get(i).value + "#" + rightAns.get(i) +
+			// " : " + (leftAns.get(i)==rightAns.get(i)));
+			if (leftAns.get(i) == rightAns.get(i)
+					&& leftAns.get(i).value.equals("NP")) {
+				ArrayList<MyTreeNode> leaves = leftAns.get(i).getLeaves();
+				if (leaves.get(leaves.size() - 1) == rightLeaf) {
+					treeNode = leftAns.get(i);
+					if (leaves.get(0) == leftLeaf) {
+						break;
+					}
+				}
+			} else if (leftAns.get(i) != rightAns.get(i)) {
+				break;
+			}
+		}
+
+		if (treeNode == null) {
+			for (int i = 0; i < leftAns.size() && i < rightAns.size(); i++) {
+				// System.out.println(leftAns.get(i).value + "#" +
+				// rightAns.get(i) + " : " + (leftAns.get(i)==rightAns.get(i)));
+				if (leftAns.get(i) == rightAns.get(i)
+						&& leftAns.get(i).value.equals("NP")) {
+					treeNode = leftAns.get(i);
+				} else if (leftAns.get(i) != rightAns.get(i)) {
+					break;
+				}
+			}
+		}
+
+		if (treeNode == null) {
+			treeNode = rightLeaf.parent;
+		}
+		// System.out.println(em.extent + " # " + part.getPartName());
+		MyTreeNode head = treeNode.getHeadLeaf();
+		// head = treeNode.getLeaves().get(treeNode.getLeaves().size());
 //		m.headID = sentence.getWord(head.leafIdx).index;
-//		m.headInS = head.leafIdx;
-//		m.head = head.value;
-//		m.NP = treeNode;
-//
-//		MyTreeNode maxTree = getMaxNPTreeNode(rightLeaf);
-//		MyTreeNode minTree = getMinNPTreeNode(rightLeaf);
-//		int begin = maxTree.getLeaves().get(0).leafIdx;
-//		int end = minTree.getLeaves().get(0).leafIdx;
-//
-//		for (int i = begin; i < end; i++) {
-//			m.modifyList.add(sentence.getWord(i).word);
-//		}
-//
-//		// em.headInS = em.endInS;
-//		// em.head = sentence.getWord(em.headInS).word;
-//
-//		if (m.head.equals(",")) {
-//			sentence.syntaxTree.root.setAllMark(true);
-//			// Common.bangErrorPOS(sentence.syntaxTree.root.getPlainText(true));
-//		}
-//
-//		if (head.parent.value.equals("NR") || head.parent.value.equals("NNP")
-//				|| head.parent.value.equals("NNPS")) {
-//			m.mType = EMUtil.MentionType.proper;
-//		} else if (head.parent.value.equals("PN")
-//				|| head.parent.value.equals("PRP")
-//				|| head.parent.value.equals("PRP$")) {
-//			m.mType = EMUtil.MentionType.pronoun;
-//		} else if (head.parent.value.equals("NN")
-//				|| head.parent.value.equals("NNS")) {
-//			m.mType = EMUtil.MentionType.common;
-//		} else {
-//			m.mType = EMUtil.MentionType.tmporal;
-//		}
-//		// check subject or object
-//		boolean subject = false;
-//
-//		boolean haveNPAncestor = false;
-//		if (treeNode != null) {
-//			for (MyTreeNode tmp : treeNode.getAncestors()) {
-//				if (tmp.value.equals("NP")
-//						&& tmp.getLeaf(tmp.getLeaves().size() - 1) != treeNode
-//								.getLeaf(treeNode.getLeaves().size() - 1)) {
-//					haveNPAncestor = true;
-//					break;
-//				}
-//			}
-//		}
-//
-//		if (haveNPAncestor) {
-//			m.nested = true;
-//		}
-//
-//		if (haveNPAncestor) {
-//			m.gram = Grammatic.modifier;
-//		} else if (treeNode.parent == null) {
-//			m.gram = EMUtil.Grammatic.other;
-//		} else {
-//			for (int i = treeNode.childIndex + 1; i < treeNode.parent.children
-//					.size(); i++) {
-//				MyTreeNode sibling = treeNode.parent.children.get(i);
-//				if (sibling.value.equals("VP")) {
-//					subject = true;
-//					m.V = sibling;
-//					break;
-//				}
-//			}
-//			if (subject) {
-//				m.gram = EMUtil.Grammatic.subject;
-//			} else {
-//				boolean object = false;
-//				if (treeNode.parent.value.equals("VP")) {
-//					for (int i = 0; i < treeNode.childIndex; i++) {
-//						MyTreeNode sibling = treeNode.parent.children.get(i);
-//						if (sibling.value.startsWith("V")) {
-//							object = true;
-//							m.V = sibling;
-//							break;
-//						}
-//					}
-//				}
-//				if (object) {
-//					m.gram = EMUtil.Grammatic.object;
-//				}
-//			}
-//		}
-//		m.animacy = EMUtil.getAntAnimacy(m);
-//		m.gender = EMUtil.getAntGender(m);
-//		m.number = EMUtil.getAntNumber(m);
-//		m.semantic = EMUtil.getSemantic(m);
-//
-//		MyTreeNode ip = head.getAncestors().get(0);
-//		for (int i = head.getAncestors().size() - 1; i >= 0; i--) {
-//			MyTreeNode node = head.getAncestors().get(i);
-//			if (node.value.equals("IP")) {
-//				ip = node;
-//				break;
-//			}
-//		}
+//		m.headInS = doc.getIndexInSentence(m.headStart);
+		m.head = head.value;
+		m.maxTreeNode = treeNode;
+
+		MyTreeNode maxTree = getMaxNPTreeNode(rightLeaf);
+		MyTreeNode minTree = getMinNPTreeNode(rightLeaf);
+		int begin = maxTree.getLeaves().get(0).leafIdx;
+		int end = minTree.getLeaves().get(0).leafIdx;
+
+		for (int i = begin; i < end; i++) {
+			m.modifyList.add(pr.words.get(i));
+		}
+
+		// em.headInS = em.endInS;
+		// em.head = sentence.getWord(em.headInS).word;
+
+		if (m.head.equals(",")) {
+//			pr.syntaxTree.root.setAllMark(true);
+			// Common.bangErrorPOS(sentence.syntaxTree.root.getPlainText(true));
+		}
+
+		if (head.parent.value.equals("NR") || head.parent.value.equals("NNP")
+				|| head.parent.value.equals("NNPS")) {
+			m.mentionType = MentionType.Proper;
+		} else if (head.parent.value.equals("PN")
+				|| head.parent.value.equals("PRP")
+				|| head.parent.value.equals("PRP$")) {
+			m.mentionType = MentionType.Pronominal;
+		} else if (head.parent.value.equals("NN")
+				|| head.parent.value.equals("NNS")) {
+			m.mentionType = MentionType.Nominal;
+		} else {
+			m.mentionType = MentionType.Proper;
+		}
+		// check subject or object
+		boolean subject = false;
+
+		boolean haveNPAncestor = false;
+		if (treeNode != null) {
+			for (MyTreeNode tmp : treeNode.getAncestors()) {
+				if (tmp.value.equals("NP")
+						&& tmp.getLeaf(tmp.getLeaves().size() - 1) != treeNode
+								.getLeaf(treeNode.getLeaves().size() - 1)) {
+					haveNPAncestor = true;
+					break;
+				}
+			}
+		}
+
+		if (haveNPAncestor) {
+			m.nested = true;
+		}
+
+		if (haveNPAncestor) {
+			m.gram = Grammatic.modifier;
+		} else if (treeNode.parent == null) {
+			m.gram = Grammatic.other;
+		} else {
+			for (int i = treeNode.childIndex + 1; i < treeNode.parent.children
+					.size(); i++) {
+				MyTreeNode sibling = treeNode.parent.children.get(i);
+				if (sibling.value.equals("VP")) {
+					subject = true;
+					m.V = sibling;
+					break;
+				}
+			}
+			if (subject) {
+				m.gram = Grammatic.subject;
+			} else {
+				boolean object = false;
+				if (treeNode.parent.value.equals("VP")) {
+					for (int i = 0; i < treeNode.childIndex; i++) {
+						MyTreeNode sibling = treeNode.parent.children.get(i);
+						if (sibling.value.startsWith("V")) {
+							object = true;
+							m.V = sibling;
+							break;
+						}
+					}
+				}
+				if (object) {
+					m.gram = Grammatic.object;
+				}
+			}
+		}
+		m.animacy = EMUtil.getAntAnimacy(m);
+		m.gender = EMUtil.getAntGender(m);
+		m.number = EMUtil.getAntNumber(m);
+		m.semantic = EMUtil.getSemantic(m);
+
+		MyTreeNode ip = head.getAncestors().get(0);
+		for (int i = head.getAncestors().size() - 1; i >= 0; i--) {
+			MyTreeNode node = head.getAncestors().get(i);
+			if (node.value.equals("IP")) {
+				ip = node;
+				break;
+			}
+		}
 //		for (MyTreeNode l : ip.getLeaves()) {
 //			if (l.parent.value.equals("NT")) {
 //				ArrayList<String> nts = m.moreModifiers.get("NT");
@@ -1094,14 +1090,13 @@ public class EMUtil {
 //				cds.add(l.value);
 //			}
 //		}
-//
-//		for (int i = m.start; i <= m.end; i++) {
-//			if (part.getWord(i).posTag.equals("CC")
-//					|| part.getWord(i).word.equals("、")) {
-//				m.isCC = true;
-//			}
-//		}
-//	}
+
+		for (MyTreeNode node : m.maxTreeNode.getLeaves()) {
+			if (node.parent.value.equals("CC")) {
+				m.isCC = true;
+			}
+		}
+	}
 
 //	public static Mention formPhrase(MyTreeNode treeNode, CoNLLSentence sentence) {
 //		ArrayList<MyTreeNode> leaves = treeNode.getLeaves();
@@ -1945,8 +1940,8 @@ public class EMUtil {
 //		mentions.addAll(mentionsHash);
 //	}
 
-	public final static HashSet<String> countries = Common
-			.readFile2Set("country2");
+//	public final static HashSet<String> countries = Common
+//			.readFile2Set("country2");
 
 	public final static Set<String> removeWords = new HashSet<String>(
 			Arrays.asList(new String[] { "_", "ｑｕｏｔ", "人", "时候", "问题", "情况",
@@ -2691,8 +2686,8 @@ public class EMUtil {
 	public static SVOStat svoStat;
 
 	public static double calMIObject(EntityMention ant, EntityMention anaphor, ACEDoc doc) {
-		// if(true)
-		// return 1;
+		 if(true)
+		 return 1;
 		if (svoStat == null) {
 			svoStat = new SVOStat();
 			svoStat.loadMIInfo();
@@ -2740,8 +2735,8 @@ public class EMUtil {
 	}
 
 	public static double calMISubject(EntityMention ant, EntityMention anaphor, ACEDoc doc) {
-		// if(true)
-		// return 1;
+		 if(true)
+		 return 1;
 		if (svoStat == null) {
 			svoStat = new SVOStat();
 			svoStat.loadMIInfo();

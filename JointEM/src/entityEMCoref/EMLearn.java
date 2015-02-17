@@ -103,38 +103,31 @@ public class EMLearn {
 			ACEDoc doc) {
 		ArrayList<EntityMention> mentions = new ArrayList<EntityMention>();
 		for (EntityMention m : doc.allGoldNPMentions) {
-
 			if (doc.getParseResult(m.headStart) == pr) {
 				mentions.add(m);
 			}
-
 		}
 		return mentions;
 	}
 
 	@SuppressWarnings("unused")
-	public static ArrayList<ResolveGroup> extractGroups(ACEDoc part,
+	public static ArrayList<ResolveGroup> extractGroups(ACEDoc doc,
 			String docName) {
 
-		// ACEDoc goldPart = getGoldPart(part, "train");
-		ACEDoc goldPart = part;
-		// HashSet<String> goldNEs = getGoldNEs(goldPart);
-		// HashSet<String> goldPNs = getGoldPNs(goldPart);
-
+		for(EntityMention m : doc.allGoldNPMentions) {
+			EMUtil.setMentionAttri(m, doc.getParseResult(m.headStart), doc);
+		}
+		
 		ArrayList<ResolveGroup> groups = new ArrayList<ResolveGroup>();
-		for (int i = 0; i < part.parseReults.size(); i++) {
-			ParseResult s = part.parseReults.get(i);
-			// CoNLLSentence s = part.getCoNLLSentences().get(i);
-			s.mentions = extractMention(s, part);
-
-			// alignMentions(s, s.mentions, docName);
-			// assignNE(s.mentions, part.getNameEntities());
+		for (int i = 0; i < doc.parseReults.size(); i++) {
+			ParseResult s = doc.parseReults.get(i);
+			s.mentions = extractMention(s, doc);
 
 			ArrayList<EntityMention> precedMs = new ArrayList<EntityMention>();
 
 			for (int j = maxDistance; j >= 1; j--) {
 				if (i - j >= 0) {
-					for (EntityMention m : part.parseReults.get(i - j).mentions) {
+					for (EntityMention m : doc.parseReults.get(i - j).mentions) {
 						if (m.mentionType == MentionType.Pronominal) {
 							continue;
 						}
@@ -174,16 +167,16 @@ public class EMLearn {
 				fake.isFake = true;
 				ants.add(fake);
 
-				ResolveGroup rg = new ResolveGroup(m, part, ants);
+				ResolveGroup rg = new ResolveGroup(m, doc, ants);
 				Collections.sort(ants);
 				Collections.reverse(ants);
 
 				int seq = 0;
 
 				for (EntityMention ant : ants) {
-					Entry entry = new Entry(ant, null, part);
+					Entry entry = new Entry(ant, null, doc);
 					rg.entries.add(entry);
-					entry.p_c = EMUtil.getP_C(ant, m, part);
+					entry.p_c = EMUtil.getP_C(ant, m, doc);
 					if (entry.p_c != 0) {
 						seq += 1;
 					}
@@ -264,6 +257,9 @@ public class EMLearn {
 
 		int docNo = 0;
 		for (String line : lines) {
+			if(docNo%50==0) {
+				System.out.println(docNo + "/" + lines.size());
+			}
 			if (docNo % 10 < percent) {
 				ACEDoc d = new ACEChiDoc(line);
 				groups.addAll(extractGroups(d, d.fileID));
@@ -306,17 +302,17 @@ public class EMLearn {
 			for (Entry entry : rg.entries) {
 				Context context = entry.context;
 
-				double p_number = numberP.getVal(entry.number.name(),
-						rg.number.name());
-				double p_gender = genderP.getVal(entry.gender.name(),
-						rg.gender.name());
-				double p_animacy = animacyP.getVal(entry.animacy.name(),
-						rg.animacy.name());
-				double p_grammatic = grammaticP.getVal(entry.gram.name(),
-						rg.gram.name());
+//				double p_number = numberP.getVal(entry.number.name(),
+//						rg.number.name());
+//				double p_gender = genderP.getVal(entry.gender.name(),
+//						rg.gender.name());
+//				double p_animacy = animacyP.getVal(entry.animacy.name(),
+//						rg.animacy.name());
+//				double p_grammatic = grammaticP.getVal(entry.gram.name(),
+//						rg.gram.name());
 
 				double p_semetic = semanticP.getVal(entry.sem, rg.sem);
-				double p_cilin = cilin.getVal(entry.cilin, rg.cilin);
+//				double p_cilin = cilin.getVal(entry.cilin, rg.cilin);
 
 				double p_context = .5;
 				Double d = contextVals.get(context.toString());
@@ -385,17 +381,17 @@ public class EMLearn {
 				double p = entry.p;
 				Context context = entry.context;
 
-				numberP.addFracCount(entry.number.name(), group.number.name(),
-						p);
-				genderP.addFracCount(entry.gender.name(), group.gender.name(),
-						p);
-				animacyP.addFracCount(entry.animacy.name(),
-						group.animacy.name(), p);
+//				numberP.addFracCount(entry.number.name(), group.number.name(),
+//						p);
+//				genderP.addFracCount(entry.gender.name(), group.gender.name(),
+//						p);
+//				animacyP.addFracCount(entry.animacy.name(),
+//						group.animacy.name(), p);
 
 				semanticP.addFracCount(entry.sem, group.sem, p);
 
-				grammaticP
-						.addFracCount(entry.gram.name(), group.gram.name(), p);
+//				grammaticP
+//						.addFracCount(entry.gram.name(), group.gram.name(), p);
 
 				cilin.addFracCount(entry.cilin, group.cilin, p);
 
@@ -471,7 +467,7 @@ public class EMLearn {
 		Common.outputHashMap(fracContextCount, "fracContextCount");
 		Common.outputHashMap(contextPrior, "contextPrior");
 
-		ApplyEM.run("all");
+		ApplyEM.run(Util.part);
 	}
 
 }
